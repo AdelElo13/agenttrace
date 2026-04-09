@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { Trace } from '@agenttrace/core';
+import type { Trace } from 'agenttrace-core';
 import { DEMO_TRACE } from '@/lib/demo-trace';
 import { TraceView } from './trace-view';
 import { TraceHistory } from './trace-history';

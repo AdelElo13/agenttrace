@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Trace } from '@agenttrace/core';
+import type { Trace } from 'agenttrace-core';
 import { CostSummary } from './cost-summary';
 import { AgentBreakdown } from './agent-breakdown';
 import { DecisionTree } from './decision-tree';

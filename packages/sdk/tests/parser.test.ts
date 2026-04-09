@@ -16,8 +16,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseClaudeCodeSession } from '../src/parsers/claude-code.js';
-import { flattenDecisions, findPricing, calculateCost } from '@agenttrace/core';
-import type { Decision, Trace } from '@agenttrace/core';
+import { flattenDecisions, findPricing, calculateCost } from 'agenttrace-core';
+import type { Decision, Trace } from 'agenttrace-core';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 

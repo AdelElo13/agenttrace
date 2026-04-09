@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Decision, DecisionType, DecisionOutcome } from '@agenttrace/core';
+import type { Decision, DecisionType, DecisionOutcome } from 'agenttrace-core';
 
 interface DecisionTreeProps {
   decision: Decision;

@@ -22,7 +22,7 @@ Your agents spent $8.14. Here's what was worth it.
 
 ```bash
 # Install
-npm install -g @agenttrace/sdk
+npm install -g agenttrace-sdk
 
 # Auto-trace every Claude Code session (one command, done)
 agenttrace init
@@ -121,7 +121,7 @@ packages/
 Instrument your own agent code:
 
 ```typescript
-import { Tracer } from '@agenttrace/sdk';
+import { Tracer } from 'agenttrace-sdk';
 
 const tracer = new Tracer({
   project: 'my-app',

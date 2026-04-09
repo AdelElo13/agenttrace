@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { parseClaudeCodeSession } from './parsers/claude-code.js';
-import type { Trace, Insight } from '@agenttrace/core';
+import type { Trace, Insight } from 'agenttrace-core';
 
 const args = process.argv.slice(2);
 const command = args[0];

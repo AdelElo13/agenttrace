@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Trace } from '@agenttrace/core';
+import type { Trace } from 'agenttrace-core';
 
 interface AppliedEntry {
   insightId: string;

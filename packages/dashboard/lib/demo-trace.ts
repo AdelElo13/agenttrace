@@ -3,7 +3,7 @@
  * that spawned 3 sub-agents for a feature implementation.
  */
 
-import type { Trace, Decision, TokenUsage, CostBreakdown } from '@agenttrace/core';
+import type { Trace, Decision, TokenUsage, CostBreakdown } from 'agenttrace-core';
 
 function tok(input: number, output: number, cacheRead = 0): TokenUsage {
   return { input, output, cacheRead, cacheWrite: 0 };

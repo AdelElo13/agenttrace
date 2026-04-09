@@ -19,7 +19,7 @@ import type {
   Trace,
   TokenUsage,
   CostBreakdown,
-} from '@agenttrace/core';
+} from 'agenttrace-core';
 import {
   findPricing,
   calculateCost,
@@ -28,7 +28,7 @@ import {
   detectInsights,
   buildAgentSummaries,
   flattenDecisions,
-} from '@agenttrace/core';
+} from 'agenttrace-core';
 
 // ── Config ────────────────────────────────────────────────────
 

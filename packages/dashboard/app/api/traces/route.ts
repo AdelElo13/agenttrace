@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { NextResponse } from 'next/server';
-import type { Trace } from '@agenttrace/core';
+import type { Trace } from 'agenttrace-core';
 
 const TRACES_DIR = join(process.cwd(), '.traces');
 

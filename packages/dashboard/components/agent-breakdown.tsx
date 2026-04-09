@@ -1,6 +1,6 @@
 'use client';
 
-import type { Trace, AgentSummary } from '@agenttrace/core';
+import type { Trace, AgentSummary } from 'agenttrace-core';
 
 interface AgentBreakdownProps {
   trace: Trace;

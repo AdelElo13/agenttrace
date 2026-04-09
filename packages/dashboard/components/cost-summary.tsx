@@ -1,6 +1,6 @@
 'use client';
 
-import type { Trace } from '@agenttrace/core';
+import type { Trace } from 'agenttrace-core';
 
 interface CostSummaryProps {
   trace: Trace;

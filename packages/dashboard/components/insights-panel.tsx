@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Insight, InsightSeverity, Recommendation } from '@agenttrace/core';
+import type { Insight, InsightSeverity, Recommendation } from 'agenttrace-core';
 
 interface InsightsPanelProps {
   insights: readonly Insight[];

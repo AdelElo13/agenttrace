@@ -11,8 +11,8 @@
  * - Remainder tokens distributed correctly (no Math.floor loss)
  */
 
-import type { DecisionType } from '@agenttrace/core';
-import { findPricing, calculateCost } from '@agenttrace/core';
+import type { DecisionType } from 'agenttrace-core';
+import { findPricing, calculateCost } from 'agenttrace-core';
 import { Tracer, Span, type TracerConfig } from '../tracer.js';
 
 // ── Claude Code JSONL Types ───────────────────────────────────
