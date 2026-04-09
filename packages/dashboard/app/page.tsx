@@ -1,5 +1,4 @@
-import { TraceView } from '@/components/trace-view';
-import { DEMO_TRACE } from '@/lib/demo-trace';
+import { TraceLoader } from '@/components/trace-loader';
 
 export default function Home() {
   return (
@@ -20,7 +19,7 @@ export default function Home() {
       </header>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <TraceView trace={DEMO_TRACE} />
+        <TraceLoader />
       </div>
     </main>
   );

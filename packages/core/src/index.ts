@@ -11,6 +11,7 @@ export type {
   InsightSeverity,
   InsightCategory,
   Insight,
+  Recommendation,
 } from './types.js';
 
 export { findPricing, calculateCost, sumTokens } from './pricing.js';

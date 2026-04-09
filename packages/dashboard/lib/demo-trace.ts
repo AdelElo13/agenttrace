@@ -331,6 +331,7 @@ export const DEMO_TRACE: Trace = {
       evidence: ['6 of 8 file reads produced no auth-related information', 'Each dead-end cost >$0.03 with zero contribution to outcome'],
       affectedDecisions: ['span-1-read-0', 'span-1-read-1', 'span-1-read-2', 'span-1-read-3', 'span-1-read-4', 'span-1-read-5'],
       suggestion: 'Narrow the research scope: instruct the agent to focus on auth/ directory first, or provide file patterns.',
+      recommendation: { action: 'Add "focus on src/auth/ directory" to the research agent prompt. Use Glob("src/auth/**") before reading files.', type: 'prompt', projectedWeeklySavings: 0.95, effort: 'trivial', applied: false },
     },
     {
       id: 'insight-2', severity: 'warning', category: 'redundant_work',
@@ -340,6 +341,7 @@ export const DEMO_TRACE: Trace = {
       evidence: ['First result (next-auth.js.org) was used in implementation', '4 subsequent fetches produced no new information used downstream'],
       affectedDecisions: ['span-2-web-1', 'span-2-web-2', 'span-2-web-3', 'span-2-web-4'],
       suggestion: 'Add early-exit logic: if the first result answers the question, stop searching.',
+      recommendation: { action: 'Add "stop searching after finding a relevant result" to the docs agent prompt. Or use Context7 MCP for targeted doc lookup instead of broad web fetches.', type: 'prompt', projectedWeeklySavings: 1.15, effort: 'trivial', applied: false },
     },
     {
       id: 'insight-3', severity: 'info', category: 'retry_loop',
@@ -349,6 +351,7 @@ export const DEMO_TRACE: Trace = {
       evidence: ['2 consecutive test failures with the same test command', 'Failures were env/config issues, not logic bugs — preventable with pre-checks'],
       affectedDecisions: ['span-3-test-1', 'span-3-test-2'],
       suggestion: 'Add environment validation before running tests. Check .env.example for required variables.',
+      recommendation: { action: 'Add a pre-test validation step: "Before running tests, verify all required env vars from .env.example are set."', type: 'config', projectedWeeklySavings: 0.75, effort: 'easy', applied: false },
     },
   ],
 };

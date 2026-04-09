@@ -8,7 +8,7 @@
  * but "which agent decisions were worth the money."
  */
 
-import type { Decision, Trace, Insight, InsightCategory, InsightSeverity, AgentSummary, DecisionRef } from './types.js';
+import type { Decision, Trace, Insight, InsightCategory, InsightSeverity, AgentSummary, DecisionRef, Recommendation } from './types.js';
 
 // ── Waste Scoring ─────────────────────────────────────────────
 
@@ -59,15 +59,23 @@ export function detectInsights(root: Decision): readonly Insight[] {
     const failures = decisions.filter(d => d.outcome === 'failure');
     if (failures.length >= 3) {
       const cost = failures.reduce((s, d) => s + d.cost.total, 0);
+      const toolName = key.split(':')[1]!;
       insights.push(
         makeInsight(++insightId, 'warning', 'retry_loop',
-          `Retry loop: ${key.split(':')[1]}`,
-          `Agent retried ${key.split(':')[1]} ${failures.length} times before succeeding. Consider adding validation before the call.`,
+          `Retry loop: ${toolName}`,
+          `Agent retried ${toolName} ${failures.length} times before succeeding. Consider adding validation before the call.`,
           cost,
           failures.map(d => d.id),
           'Add pre-validation or error handling to avoid repeated failures.',
-          0.9,
-          [`${failures.length} consecutive failures of the same tool by the same agent`, `Total cost of failed attempts: $${cost.toFixed(2)}`],
+          {
+            confidence: 0.9,
+            evidence: [`${failures.length} consecutive failures of the same tool by the same agent`, `Total cost of failed attempts: $${cost.toFixed(2)}`],
+            recommendation: {
+              action: `Add a validation step before calling ${toolName}. Check prerequisites (env vars, file existence, permissions) before each attempt.`,
+              type: 'workflow',
+              effort: 'easy',
+            },
+          },
         ),
       );
     }
@@ -86,8 +94,15 @@ export function detectInsights(root: Decision): readonly Insight[] {
         cost,
         deadEnds.map(d => d.id),
         'Narrow the search scope or provide better context to guide the agent.',
-        Math.min(0.95, 0.6 + deadEnds.length * 0.05),
-        [`${deadEnds.length} explorations marked as dead_end`, `Each cost >$0.10 with no useful outcome`],
+        {
+          confidence: Math.min(0.95, 0.6 + deadEnds.length * 0.05),
+          evidence: [`${deadEnds.length} explorations marked as dead_end`, `Each cost >$0.10 with no useful outcome`],
+          recommendation: {
+            action: 'Add specific file patterns or directory scopes to agent instructions. Use Glob/Grep before Read to narrow candidates.',
+            type: 'prompt',
+            effort: 'trivial',
+          },
+        },
       ),
     );
   }
@@ -112,8 +127,15 @@ export function detectInsights(root: Decision): readonly Insight[] {
           cost * 0.3,
           decisions.map(d => d.id),
           'Consider sharing results between agents or narrowing each agent\'s scope.',
-          0.5,
-          [`${agents.size} agents used ${tool} independently`, `Cross-agent overlap detected (low confidence — may be intentional)`],
+          {
+            confidence: 0.5,
+            evidence: [`${agents.size} agents used ${tool} independently`, `Cross-agent overlap detected (low confidence — may be intentional)`],
+            recommendation: {
+              action: `Share ${tool} results between agents via shared context, or assign ${tool} usage to a single dedicated agent.`,
+              type: 'workflow',
+              effort: 'moderate',
+            },
+          },
         ),
       );
     }
@@ -131,8 +153,15 @@ export function detectInsights(root: Decision): readonly Insight[] {
           childCost,
           [d.id],
           'Review whether this delegation was necessary or if the parent agent could have handled it directly.',
-          0.85,
-          [`Delegation cost $${childCost.toFixed(2)} with outcome "${d.outcome}"`, `Non-success outcome on expensive sub-agent is strong waste signal`],
+          {
+            confidence: 0.85,
+            evidence: [`Delegation cost $${childCost.toFixed(2)} with outcome "${d.outcome}"`, `Non-success outcome on expensive sub-agent is strong waste signal`],
+            recommendation: {
+              action: `Consider handling "${d.description}" in the parent agent instead of delegating, or add better scoping to reduce sub-agent cost.`,
+              type: 'workflow',
+              effort: 'moderate',
+            },
+          },
         ),
       );
     }
@@ -207,6 +236,12 @@ function sumTreeCost(node: Decision): number {
   return node.cost.total + node.children.reduce((s, c) => s + sumTreeCost(c), 0);
 }
 
+interface InsightOpts {
+  confidence?: number;
+  evidence?: readonly string[];
+  recommendation?: Partial<Recommendation>;
+}
+
 function makeInsight(
   id: number,
   severity: InsightSeverity,
@@ -216,9 +251,9 @@ function makeInsight(
   cost: number,
   affectedDecisions: readonly string[],
   suggestion: string,
-  confidence: number = 0.7,
-  evidence: readonly string[] = [],
+  opts: InsightOpts = {},
 ): Insight {
+  const weeklySavings = Math.round(cost * 5 * 100) / 100; // assume ~5 similar sessions/week
   return {
     id: `insight-${id}`,
     severity,
@@ -226,9 +261,16 @@ function makeInsight(
     title,
     description,
     cost: Math.round(cost * 100) / 100,
-    confidence,
-    evidence,
+    confidence: opts.confidence ?? 0.7,
+    evidence: opts.evidence ?? [],
     affectedDecisions,
     suggestion,
+    recommendation: {
+      action: opts.recommendation?.action ?? suggestion,
+      type: opts.recommendation?.type ?? 'workflow',
+      projectedWeeklySavings: opts.recommendation?.projectedWeeklySavings ?? weeklySavings,
+      effort: opts.recommendation?.effort ?? 'easy',
+      applied: false,
+    },
   };
 }

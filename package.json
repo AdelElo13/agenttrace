@@ -10,6 +10,7 @@
     "lint": "tsc --noEmit --project packages/core/tsconfig.json && tsc --noEmit --project packages/sdk/tsconfig.json"
   },
   "devDependencies": {
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.4"
   }
 }

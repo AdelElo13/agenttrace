@@ -134,4 +134,13 @@ export interface Insight {
   readonly evidence: readonly string[];  // specific observations backing the claim
   readonly affectedDecisions: readonly string[];
   readonly suggestion: string;
+  readonly recommendation: Recommendation;
+}
+
+export interface Recommendation {
+  readonly action: string;               // specific thing to change
+  readonly type: 'config' | 'prompt' | 'workflow' | 'tool_choice';
+  readonly projectedWeeklySavings: number;  // estimated $/week if applied
+  readonly effort: 'trivial' | 'easy' | 'moderate';
+  readonly applied: boolean;             // track if user marked as applied
 }
