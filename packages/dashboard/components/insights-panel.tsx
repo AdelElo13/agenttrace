@@ -1,13 +1,51 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Insight, InsightSeverity, Recommendation } from '@agenttrace/core';
 
 interface InsightsPanelProps {
   insights: readonly Insight[];
+  traceId: string;
 }
 
-export function InsightsPanel({ insights }: InsightsPanelProps) {
+export function InsightsPanel({ insights, traceId }: InsightsPanelProps) {
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());
+
+  // Load persisted applied state
+  useEffect(() => {
+    fetch('/api/applied')
+      .then(r => r.json())
+      .then((entries: Array<{ insightId: string; traceId: string }>) => {
+        const ids = new Set(
+          entries.filter(e => e.traceId === traceId).map(e => e.insightId),
+        );
+        setAppliedIds(ids);
+      })
+      .catch(() => {});
+  }, [traceId]);
+
+  const toggleApplied = useCallback(async (insightId: string, insight: Insight) => {
+    const isApplied = appliedIds.has(insightId);
+    // Optimistic update
+    setAppliedIds(prev => {
+      const next = new Set(prev);
+      if (isApplied) next.delete(insightId);
+      else next.add(insightId);
+      return next;
+    });
+    // Persist
+    await fetch('/api/applied', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        insightId,
+        traceId,
+        category: insight.category,
+        projectedWeeklySavings: insight.recommendation.projectedWeeklySavings,
+      }),
+    }).catch(() => {});
+  }, [appliedIds, traceId]);
+
   const sorted = [...insights].sort((a, b) => {
     const order: Record<InsightSeverity, number> = { critical: 0, warning: 1, info: 2 };
     return order[a.severity] - order[b.severity];
@@ -42,15 +80,23 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
 
       {/* Insight cards */}
       {sorted.map(insight => (
-        <InsightCard key={insight.id} insight={insight} />
+        <InsightCard
+          key={insight.id}
+          insight={insight}
+          applied={appliedIds.has(insight.id)}
+          onToggleApplied={() => toggleApplied(insight.id, insight)}
+        />
       ))}
     </div>
   );
 }
 
-function InsightCard({ insight }: { insight: Insight }) {
+function InsightCard({ insight, applied, onToggleApplied }: {
+  insight: Insight;
+  applied: boolean;
+  onToggleApplied: () => void;
+}) {
   const [showEvidence, setShowEvidence] = useState(false);
-  const [applied, setApplied] = useState(insight.recommendation.applied);
   const style = severityStyle(insight.severity);
   const confidencePct = Math.round(insight.confidence * 100);
   const rec = insight.recommendation;
@@ -98,7 +144,7 @@ function InsightCard({ insight }: { insight: Insight }) {
         {/* Apply button */}
         <div className="mt-3 flex items-center gap-3">
           <button
-            onClick={() => setApplied(!applied)}
+            onClick={onToggleApplied}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               applied
                 ? 'bg-emerald-800 text-emerald-200'

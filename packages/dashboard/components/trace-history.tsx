@@ -1,6 +1,15 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import type { Trace } from '@agenttrace/core';
+
+interface AppliedEntry {
+  insightId: string;
+  traceId: string;
+  appliedAt: number;
+  category: string;
+  projectedWeeklySavings: number;
+}
 
 interface TraceHistoryProps {
   traces: Trace[];
@@ -41,13 +50,38 @@ agenttrace report trace.json > report.md`}
     );
   }
 
-  // Calculate before/after metrics for applied recommendations
+  const [applied, setApplied] = useState<AppliedEntry[]>([]);
+
+  useEffect(() => {
+    fetch('/api/applied')
+      .then(r => r.json())
+      .then(setApplied)
+      .catch(() => {});
+  }, []);
+
   const sortedTraces = [...traces].sort((a, b) => b.startedAt - a.startedAt);
-  const latestWaste = sortedTraces[0]?.wastePercentage ?? 0;
-  const oldestWaste = sortedTraces[sortedTraces.length - 1]?.wastePercentage ?? 0;
-  const wasteChange = latestWaste - oldestWaste;
   const totalSpend = sortedTraces.reduce((s, t) => s + t.cost.total, 0);
   const totalWaste = sortedTraces.reduce((s, t) => s + t.wasteTotal, 0);
+
+  // Causal before/after: compare waste BEFORE first applied recommendation vs AFTER
+  const firstAppliedAt = applied.length > 0
+    ? Math.min(...applied.map(a => a.appliedAt))
+    : Infinity;
+  const beforeTraces = sortedTraces.filter(t => t.endedAt < firstAppliedAt);
+  const afterTraces = sortedTraces.filter(t => t.startedAt >= firstAppliedAt);
+
+  const beforeWaste = beforeTraces.length > 0
+    ? beforeTraces.reduce((s, t) => s + t.wastePercentage, 0) / beforeTraces.length
+    : null;
+  const afterWaste = afterTraces.length > 0
+    ? afterTraces.reduce((s, t) => s + t.wastePercentage, 0) / afterTraces.length
+    : null;
+
+  const wasteChange = beforeWaste !== null && afterWaste !== null
+    ? afterWaste - beforeWaste
+    : 0;
+  const hasComparison = beforeWaste !== null && afterWaste !== null;
+  const totalProjectedSavings = applied.reduce((s, a) => s + a.projectedWeeklySavings, 0);
 
   return (
     <div className="space-y-6">
@@ -55,7 +89,7 @@ agenttrace report trace.json > report.md`}
       {sortedTraces.length >= 2 && (
         <div className="rounded-xl border border-emerald-800/30 bg-emerald-950/15 p-5">
           <h3 className="text-sm font-medium text-emerald-400">Realized Savings Tracker</h3>
-          <div className="mt-3 grid grid-cols-4 gap-6">
+          <div className="mt-3 grid grid-cols-5 gap-6">
             <div>
               <div className="text-xs text-zinc-500">Total spend</div>
               <div className="mt-0.5 text-xl font-bold tabular-nums">${totalSpend.toFixed(2)}</div>
@@ -65,7 +99,11 @@ agenttrace report trace.json > report.md`}
               <div className="mt-0.5 text-xl font-bold tabular-nums text-red-400">${totalWaste.toFixed(2)}</div>
             </div>
             <div>
-              <div className="text-xs text-zinc-500">Waste trend</div>
+              <div className="text-xs text-zinc-500">Applied fixes</div>
+              <div className="mt-0.5 text-xl font-bold tabular-nums text-emerald-400">{applied.length}</div>
+            </div>
+            <div>
+              <div className="text-xs text-zinc-500">{hasComparison ? 'Waste change' : 'Waste trend'}</div>
               <div className={`mt-0.5 text-xl font-bold tabular-nums ${wasteChange <= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 {wasteChange <= 0 ? '' : '+'}{(wasteChange * 100).toFixed(1)}%
               </div>
@@ -75,10 +113,32 @@ agenttrace report trace.json > report.md`}
               <div className="mt-0.5 text-xl font-bold tabular-nums">{sortedTraces.length}</div>
             </div>
           </div>
+
+          {/* Causal before/after breakdown */}
+          {hasComparison && applied.length > 0 && (
+            <div className="mt-4 rounded-lg bg-zinc-950/40 p-3">
+              <div className="text-xs font-medium text-zinc-400">Before/After Applying Recommendations</div>
+              <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-zinc-500">Before ({beforeTraces.length} sessions): </span>
+                  <span className="font-medium tabular-nums">{(beforeWaste! * 100).toFixed(1)}% avg waste</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500">After ({afterTraces.length} sessions): </span>
+                  <span className="font-medium tabular-nums">{(afterWaste! * 100).toFixed(1)}% avg waste</span>
+                </div>
+                <div>
+                  <span className="text-zinc-500">Projected savings: </span>
+                  <span className="font-medium tabular-nums text-emerald-400">${totalProjectedSavings.toFixed(2)}/week</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {wasteChange < 0 && (
             <p className="mt-3 text-xs text-emerald-400/70">
-              Waste percentage decreased by {Math.abs(wasteChange * 100).toFixed(1)}% since your first traced session.
-              Your recommendations are working.
+              Waste decreased by {Math.abs(wasteChange * 100).toFixed(1)}% after applying {applied.length} recommendation{applied.length !== 1 ? 's' : ''}.
+              Your fixes are working.
             </p>
           )}
         </div>

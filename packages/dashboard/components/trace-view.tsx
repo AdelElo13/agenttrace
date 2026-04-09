@@ -81,7 +81,7 @@ export function TraceView({ trace }: TraceViewProps) {
         </div>
       )}
       {activeTab === 'decisions' && <DecisionTree decision={trace.rootDecision} />}
-      {activeTab === 'insights' && <InsightsPanel insights={trace.insights} />}
+      {activeTab === 'insights' && <InsightsPanel insights={trace.insights} traceId={trace.id} />}
     </div>
   );
 }
